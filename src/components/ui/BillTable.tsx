@@ -1,32 +1,26 @@
-export interface BillItem {
-  name: string;
-  price: number;
-  quantity: number;
-}
+import {
+  IDR_FORMATTER,
+  calculateTotalFromItems,
+  type BillData,
+  type BillItem,
+} from "@/lib/bill";
 
-export interface BillData {
-  items: BillItem[];
-  total_harga: number;
-}
+export type { BillData, BillItem };
 
 interface BillTableProps {
   data: BillData | null;
   onChange?: (nextData: BillData) => void;
 }
 
-function calculateTotal(items: BillItem[]) {
-  return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-}
-
 export default function BillTable({ data, onChange }: BillTableProps) {
   const items: BillItem[] = data?.items || [];
-  const total = data ? calculateTotal(items) : 0;
+  const total = data ? calculateTotalFromItems(items) : 0;
 
   const updateItems = (nextItems: BillItem[]) => {
     if (!onChange) return;
     onChange({
       items: nextItems,
-      total_harga: calculateTotal(nextItems),
+      total_harga: calculateTotalFromItems(nextItems),
     });
   };
 
@@ -136,11 +130,7 @@ export default function BillTable({ data, onChange }: BillTableProps) {
         + Tambah Item
       </button>
       <div className="mt-4 text-right font-bold text-lg">
-        Total:{" "}
-        {new Intl.NumberFormat("id-ID", {
-          style: "currency",
-          currency: "IDR",
-        }).format(total)}
+        Total: {IDR_FORMATTER.format(total)}
       </div>
     </div>
   );

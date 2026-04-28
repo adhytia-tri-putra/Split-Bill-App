@@ -1,6 +1,58 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 
+const SUPPORTED_CURRENCIES = ["IDR", "USD", "SGD", "EUR"] as const;
+type SupportedCurrency = (typeof SUPPORTED_CURRENCIES)[number];
+
+function inferCurrencyFromText(text: string): SupportedCurrency {
+  const normalized = text.toUpperCase();
+
+  if (
+    normalized.includes("SGD") ||
+    normalized.includes("S$") ||
+    normalized.includes("SINGAPORE DOLLAR")
+  ) {
+    return "SGD";
+  }
+
+  if (
+    normalized.includes("EUR") ||
+    normalized.includes("€") ||
+    normalized.includes("EURO")
+  ) {
+    return "EUR";
+  }
+
+  if (
+    normalized.includes("USD") ||
+    normalized.includes("US$") ||
+    normalized.includes("$")
+  ) {
+    return "USD";
+  }
+
+  if (
+    normalized.includes("IDR") ||
+    normalized.includes("RP") ||
+    normalized.includes("RUPIAH")
+  ) {
+    return "IDR";
+  }
+
+  return "IDR";
+}
+
+function normalizeCurrency(value: unknown, fallback: SupportedCurrency): SupportedCurrency {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+  const upper = value.trim().toUpperCase();
+  if (SUPPORTED_CURRENCIES.includes(upper as SupportedCurrency)) {
+    return upper as SupportedCurrency;
+  }
+  return fallback;
+}
+
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -37,11 +89,16 @@ export async function POST(req: Request) {
       
       Format yang diharapkan:
       {
+        "currency_code": "IDR",
         "items": [
           { "name": "Nama Barang", "price": 10000, "quantity": 1 }
         ],
         "total_harga": 10000
       }
+
+      Aturan currency:
+      - currency_code WAJIB salah satu dari: IDR, USD, SGD, EUR.
+      - Deteksi dari simbol/teks pada struk (contoh Rp -> IDR, $/USD -> USD, S$ -> SGD, € -> EUR).
 
       Teks Struk Mentah:
       ${text}
@@ -59,9 +116,27 @@ export async function POST(req: Request) {
     outputText = outputText.replace(/```/g, "");
     outputText = outputText.trim();
 
+    const parsed = JSON.parse(outputText) as {
+      currency_code?: unknown;
+      items?: unknown;
+      total_harga?: unknown;
+    };
+    const fallbackCurrency = inferCurrencyFromText(text);
+    const normalizedCurrency = normalizeCurrency(
+      parsed.currency_code,
+      fallbackCurrency,
+    );
+
+    const normalizedPayload = {
+      currency_code: normalizedCurrency,
+      items: Array.isArray(parsed.items) ? parsed.items : [],
+      total_harga:
+        typeof parsed.total_harga === "number" ? parsed.total_harga : 0,
+    };
+
     return NextResponse.json({
       success: true,
-      data: outputText,
+      data: JSON.stringify(normalizedPayload),
     });
   } catch (error: unknown) {
     console.error("Gemini Error:", error);
