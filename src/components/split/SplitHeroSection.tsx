@@ -47,11 +47,6 @@ export default function SplitHeroSection({
           </select>
         </label>
       </div>
-      <p className="mt-2 text-xs text-zinc-500">
-        {isConvertingCurrency
-          ? `Mengonversi harga dari ${currencyCode}...`
-          : "Saat ganti mata uang, harga item otomatis dikonversi sesuai kurs terbaru."}
-      </p>
       {currencyError ? (
         <p className="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-700">
           {currencyError}
@@ -60,4 +55,3 @@ export default function SplitHeroSection({
     </header>
   );
 }
-

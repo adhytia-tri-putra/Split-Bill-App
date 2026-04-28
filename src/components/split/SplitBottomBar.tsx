@@ -14,8 +14,8 @@ export default function SplitBottomBar({
   onConfirm,
 }: SplitBottomBarProps) {
   return (
-    <section className="fixed bottom-0 left-0 right-0 border-t border-zinc-200 bg-white/95 px-3 py-3 backdrop-blur sm:px-6">
-      <div className="mx-auto flex w-full max-w-[1100px] items-center justify-between gap-3">
+    <section className="fixed bottom-0 left-0 right-0 z-40 border-t border-zinc-200 bg-white/95 px-3 py-3 backdrop-blur sm:px-6">
+      <div className="mx-auto flex w-full max-w-[1100px] items-center justify-between gap-3 pb-[env(safe-area-inset-bottom)]">
         <div>
           <p className="text-xs text-zinc-500">Total</p>
           <p className="text-lg font-semibold text-zinc-900">
@@ -43,4 +43,3 @@ export default function SplitBottomBar({
     </section>
   );
 }
-

@@ -59,7 +59,7 @@ export default function ShareButton({
           className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-900/45 p-4"
           onClick={() => setIsOpen(false)}>
           <div
-            className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-5 shadow-xl"
+            className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-5 "
             onClick={(event) => event.stopPropagation()}>
             <h3 className="text-lg font-semibold text-zinc-900">
               Pilih Channel Share

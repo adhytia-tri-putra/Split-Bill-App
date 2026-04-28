@@ -73,7 +73,7 @@ export default function SplitPage() {
     <div className="min-h-screen bg-[#f3f5f9] text-zinc-900">
       <SplitbillHeader backHref="/scan" />
 
-      <main className="mx-auto w-full max-w-[1200px] space-y-4 px-3 pb-24 pt-6 sm:space-y-5 sm:px-6 sm:pb-16 sm:pt-10">
+      <main className="mx-auto w-full max-w-[1200px] space-y-4 px-3 pb-40 pt-6 sm:space-y-5 sm:px-6 sm:pb-36 sm:pt-10">
         <SplitHeroSection
           currencyCode={currencyCode}
           isConvertingCurrency={isConvertingCurrency}

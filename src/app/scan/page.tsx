@@ -15,7 +15,7 @@ export default function ScanPage() {
 
       <main className="mx-auto w-full max-w-[1180px] px-6 pb-20 pt-12">
         <section className="mx-auto max-w-5xl">
-          <article className="rounded-3xl border border-zinc-200/90 bg-white p-8 shadow-[0_16px_40px_rgba(17,19,74,0.08)] sm:p-10">
+          <article className="rounded-3xl border border-zinc-200/90 bg-white p-8 sm:p-10">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-[#0c0956]/6 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#0c0956]">
               OCR Receipt Scanner
             </div>
