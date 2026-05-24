@@ -140,9 +140,10 @@ export function useSplitEditor() {
           return;
         }
 
+        const rate = rateJson.rate;
         const digits = getCurrencyFractionDigits(nextCurrency);
         const convertedItems = billData.items.map((item) => {
-          const convertedPrice = roundCurrency(item.price * rateJson.rate, digits);
+          const convertedPrice = roundCurrency(item.price * rate, digits);
           return {
             ...item,
             price: Math.max(0, convertedPrice),
