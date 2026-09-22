@@ -12,12 +12,16 @@ import {
 } from "@/lib/bill";
 
 type ItemPayerSelections = Record<number, Record<string, boolean>>;
+type ItemSplitModes = Record<number, "equal" | "percentage">;
+type ItemPercentages = Record<number, Record<string, number>>;
 
 interface UseSplitComputationParams {
   billItems: BillItem[];
   billTotal: number;
   participants: Participant[];
   itemPayers: ItemPayerSelections;
+  itemSplitModes: ItemSplitModes;
+  itemPercentages: ItemPercentages;
   currencyCode: string;
 }
 
@@ -70,6 +74,8 @@ export function useSplitComputation({
   billTotal,
   participants,
   itemPayers,
+  itemSplitModes,
+  itemPercentages,
   currencyCode,
 }: UseSplitComputationParams) {
   const itemSplitRows = useMemo<ItemSplitRow[]>(() => {
@@ -79,12 +85,27 @@ export function useSplitComputation({
         (person) => rowSelection[person.id],
       );
       const itemTotal = item.price * item.quantity;
-      const shares = distributeCurrency(itemTotal, selectedPayers.length);
-
       const amountsByParticipant: Record<string, number> = {};
-      selectedPayers.forEach((person, idx) => {
-        amountsByParticipant[person.id] = shares[idx] ?? 0;
-      });
+      const splitMode = itemSplitModes[itemIndex] ?? "equal";
+      const percentagesByParticipant = itemPercentages[itemIndex] ?? {};
+      const percentageTotal = selectedPayers.reduce(
+        (sum, person) => sum + Math.max(0, percentagesByParticipant[person.id] ?? 0),
+        0,
+      );
+
+      if (splitMode === "percentage" && percentageTotal > 0) {
+        selectedPayers.forEach((person) => {
+          const percent = Math.max(0, percentagesByParticipant[person.id] ?? 0);
+          amountsByParticipant[person.id] = roundCurrency(
+            itemTotal * (percent / percentageTotal),
+          );
+        });
+      } else {
+        const shares = distributeCurrency(itemTotal, selectedPayers.length);
+        selectedPayers.forEach((person, idx) => {
+          amountsByParticipant[person.id] = shares[idx] ?? 0;
+        });
+      }
 
       const allocated = Object.values(amountsByParticipant).reduce(
         (sum, value) => sum + value,
@@ -94,14 +115,17 @@ export function useSplitComputation({
       return {
         itemIndex,
         item,
+        splitMode,
         itemTotal,
         selectedPayers,
         amountsByParticipant,
         allocated,
         isAssigned: selectedPayers.length > 0,
+        percentagesByParticipant,
+        percentageTotal,
       };
     });
-  }, [billItems, itemPayers, participants]);
+  }, [billItems, itemPayers, participants, itemSplitModes, itemPercentages]);
 
   const participantBreakdown = useMemo<ParticipantBreakdown[]>(() => {
     return participants.map((person) => {
@@ -172,4 +196,3 @@ export function useSplitComputation({
     splitResultData,
   };
 }
-

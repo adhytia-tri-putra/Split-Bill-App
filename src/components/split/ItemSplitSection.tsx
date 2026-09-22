@@ -19,6 +19,15 @@ interface ItemSplitSectionProps {
   onRemoveBillItem: (itemIndex: number) => void;
   onTogglePayerForItem: (itemIndex: number, participantId: string) => void;
   onSetAllPayersForItem: (itemIndex: number, checked: boolean) => void;
+  onSetSplitModeForItem: (
+    itemIndex: number,
+    mode: "equal" | "percentage",
+  ) => void;
+  onUpdatePercentageForItem: (
+    itemIndex: number,
+    participantId: string,
+    value: string,
+  ) => void;
   onSetEditingItemIndex: (value: number | null) => void;
   onAddBillItem: () => void;
   formatAmount: (value: number) => string;
@@ -33,6 +42,8 @@ export default function ItemSplitSection({
   onRemoveBillItem,
   onTogglePayerForItem,
   onSetAllPayersForItem,
+  onSetSplitModeForItem,
+  onUpdatePercentageForItem,
   onSetEditingItemIndex,
   onAddBillItem,
   formatAmount,
@@ -177,6 +188,40 @@ export default function ItemSplitSection({
               })}
             </div>
 
+            {row.splitMode === "percentage" && row.selectedPayers.length > 0 ? (
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {row.selectedPayers.map((person) => (
+                  <label
+                    key={`pct-${row.itemIndex}-${person.id}`}
+                    className="flex items-center justify-between rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-xs">
+                    <span className="font-medium text-zinc-700">
+                      {person.name}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={row.percentagesByParticipant[person.id] ?? 0}
+                        onChange={(e) =>
+                          onUpdatePercentageForItem(
+                            row.itemIndex,
+                            person.id,
+                            e.target.value,
+                          )
+                        }
+                        className="w-16 rounded border border-zinc-300 px-2 py-1 text-right text-xs focus:border-zinc-400 focus:outline-none"
+                      />
+                      <span className="text-zinc-500">%</span>
+                    </span>
+                  </label>
+                ))}
+                <p className="sm:col-span-2 text-[11px] text-zinc-500">
+                  Total persentase: {row.percentageTotal.toFixed(2)}%
+                </p>
+              </div>
+            ) : null}
+
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs">
               <p className="text-zinc-600">
                 Teralokasi {formatAmount(row.allocated)} dari{" "}
@@ -214,6 +259,21 @@ export default function ItemSplitSection({
                   onClick={() => onSetAllPayersForItem(row.itemIndex, false)}
                   className={actionBtnClass}>
                   Reset
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onSetSplitModeForItem(
+                      row.itemIndex,
+                      row.splitMode === "equal" ? "percentage" : "equal",
+                    )
+                  }
+                  className={`${actionBtnClass} ${
+                    row.splitMode === "percentage"
+                      ? "border-sky-300 bg-sky-50 text-sky-700"
+                      : ""
+                  }`}>
+                  {row.splitMode === "percentage" ? "Mode %" : "Mode Rata"}
                 </button>
               </div>
             </div>

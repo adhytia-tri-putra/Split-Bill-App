@@ -8,11 +8,14 @@ export interface Participant {
 export interface ItemSplitRow {
   itemIndex: number;
   item: BillItem;
+  splitMode: "equal" | "percentage";
   itemTotal: number;
   selectedPayers: Participant[];
   amountsByParticipant: Record<string, number>;
   allocated: number;
   isAssigned: boolean;
+  percentagesByParticipant: Record<string, number>;
+  percentageTotal: number;
 }
 
 export interface ParticipantBreakdownItem {

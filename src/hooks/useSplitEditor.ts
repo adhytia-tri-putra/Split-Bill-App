@@ -17,6 +17,8 @@ import {
 import { normalizeItemPayersByShape } from "./useSplitComputation";
 
 export type ItemPayerSelections = Record<number, Record<string, boolean>>;
+export type ItemSplitModes = Record<number, "equal" | "percentage">;
+export type ItemPercentages = Record<number, Record<string, number>>;
 
 const DEFAULT_PARTICIPANTS: Participant[] = [
   { id: "p1", name: "Orang 1" },
@@ -40,6 +42,8 @@ export function useSplitEditor() {
     useState<Participant[]>(DEFAULT_PARTICIPANTS);
   const [nextParticipantId, setNextParticipantId] = useState(3);
   const [itemPayers, setItemPayers] = useState<ItemPayerSelections>({});
+  const [itemSplitModes, setItemSplitModes] = useState<ItemSplitModes>({});
+  const [itemPercentages, setItemPercentages] = useState<ItemPercentages>({});
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
   const [isConvertingCurrency, setIsConvertingCurrency] = useState(false);
   const [currencyError, setCurrencyError] = useState("");
@@ -140,9 +144,10 @@ export function useSplitEditor() {
           return;
         }
 
+        const exchangeRate = rateJson.rate;
         const digits = getCurrencyFractionDigits(nextCurrency);
         const convertedItems = billData.items.map((item) => {
-          const convertedPrice = roundCurrency(item.price * rateJson.rate, digits);
+          const convertedPrice = roundCurrency(item.price * exchangeRate, digits);
           return {
             ...item,
             price: Math.max(0, convertedPrice),
@@ -230,22 +235,53 @@ export function useSplitEditor() {
     });
   }, []);
 
+  const rebalancePercentages = useCallback(
+    (itemIndex: number, activeParticipantIds: string[]) => {
+      const size = activeParticipantIds.length;
+      setItemPercentages((prev) => {
+        const row = { ...(prev[itemIndex] ?? {}) };
+        participants.forEach((person) => {
+          row[person.id] = 0;
+        });
+        if (size > 0) {
+          const perPerson = roundCurrency(100 / size, 2);
+          activeParticipantIds.forEach((id) => {
+            row[id] = perPerson;
+          });
+        }
+        return {
+          ...prev,
+          [itemIndex]: row,
+        };
+      });
+    },
+    [participants],
+  );
+
   const togglePayerForItem = useCallback(
     (itemIndex: number, participantId: string) => {
       setItemPayers((prev) => {
         const row = prev[itemIndex] ?? {};
         const current = Boolean(row[participantId]);
+        const nextRow = {
+          ...row,
+          [participantId]: !current,
+        };
+
+        if ((itemSplitModes[itemIndex] ?? "equal") === "percentage") {
+          const activeIds = participants
+            .filter((person) => nextRow[person.id])
+            .map((person) => person.id);
+          rebalancePercentages(itemIndex, activeIds);
+        }
 
         return {
           ...prev,
-          [itemIndex]: {
-            ...row,
-            [participantId]: !current,
-          },
+          [itemIndex]: nextRow,
         };
       });
     },
-    [],
+    [itemSplitModes, participants, rebalancePercentages],
   );
 
   const setAllPayersForItem = useCallback(
@@ -259,8 +295,47 @@ export function useSplitEditor() {
         ...prev,
         [itemIndex]: nextRow,
       }));
+      if (checked) {
+        rebalancePercentages(
+          itemIndex,
+          participants.map((person) => person.id),
+        );
+      } else {
+        rebalancePercentages(itemIndex, []);
+      }
     },
-    [participants],
+    [participants, rebalancePercentages],
+  );
+
+  const setSplitModeForItem = useCallback(
+    (itemIndex: number, mode: "equal" | "percentage") => {
+      setItemSplitModes((prev) => ({
+        ...prev,
+        [itemIndex]: mode,
+      }));
+      if (mode === "percentage") {
+        const selectedIds = participants
+          .filter((person) => itemPayers[itemIndex]?.[person.id])
+          .map((person) => person.id);
+        rebalancePercentages(itemIndex, selectedIds);
+      }
+    },
+    [itemPayers, participants, rebalancePercentages],
+  );
+
+  const updatePercentageForItem = useCallback(
+    (itemIndex: number, participantId: string, value: string) => {
+      const parsed = Number(value);
+      const safeValue = Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+      setItemPercentages((prev) => ({
+        ...prev,
+        [itemIndex]: {
+          ...(prev[itemIndex] ?? {}),
+          [participantId]: safeValue,
+        },
+      }));
+    },
+    [],
   );
 
   return {
@@ -268,6 +343,8 @@ export function useSplitEditor() {
     billData,
     participants,
     itemPayers,
+    itemSplitModes,
+    itemPercentages,
     editingItemIndex,
     isConvertingCurrency,
     currencyError,
@@ -284,5 +361,7 @@ export function useSplitEditor() {
     removeParticipant,
     togglePayerForItem,
     setAllPayersForItem,
+    setSplitModeForItem,
+    updatePercentageForItem,
   };
 }

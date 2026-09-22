@@ -19,6 +19,8 @@ export default function SplitPage() {
     billData,
     participants,
     itemPayers,
+    itemSplitModes,
+    itemPercentages,
     editingItemIndex,
     isConvertingCurrency,
     currencyError,
@@ -35,6 +37,8 @@ export default function SplitPage() {
     removeParticipant,
     togglePayerForItem,
     setAllPayersForItem,
+    setSplitModeForItem,
+    updatePercentageForItem,
   } = useSplitEditor();
 
   const handleConfirmSplit = () => {
@@ -53,6 +57,8 @@ export default function SplitPage() {
     billTotal,
     participants,
     itemPayers,
+    itemSplitModes,
+    itemPercentages,
     currencyCode,
   });
 
@@ -97,6 +103,8 @@ export default function SplitPage() {
           onRemoveBillItem={removeBillItem}
           onTogglePayerForItem={togglePayerForItem}
           onSetAllPayersForItem={setAllPayersForItem}
+          onSetSplitModeForItem={setSplitModeForItem}
+          onUpdatePercentageForItem={updatePercentageForItem}
           onSetEditingItemIndex={setEditingItemIndex}
           onAddBillItem={addBillItem}
           formatAmount={formatAmount}
